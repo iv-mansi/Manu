@@ -1,10 +1,10 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type TimeResponse struct {
@@ -13,27 +13,21 @@ type TimeResponse struct {
 	TimeZone string `json:"timezone"`
 }
 
-func getCurrentTime(w http.ResponseWriter, r *http.Request) {
+func getCurrentTime(c *gin.Context) {
 	now := time.Now()
 	zone, _ := now.Zone()
 
-	response := TimeResponse{
+	c.JSON(http.StatusOK, TimeResponse{
 		Time:     now.Format(time.RFC3339),
 		UnixTime: now.Unix(),
 		TimeZone: zone,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
 func main() {
-	http.HandleFunc("/time", getCurrentTime)
+	r := gin.Default()
 
-	fmt.Println("Server running on http://localhost:8080")
-	fmt.Println("GET http://localhost:8080/time")
+	r.GET("/time", getCurrentTime)
 
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		fmt.Println("Error starting server:", err)
-	}
+	r.Run(":8080")
 }
